@@ -1,0 +1,12 @@
+/.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+.pytest_cache/
+
+# Ferramentas locais
+.claude/
+.DS_Store
