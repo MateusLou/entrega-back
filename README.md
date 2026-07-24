@@ -6,12 +6,14 @@ O frontend que consome esta API está em [`entrega-front`](../entrega-front).
 
 ## Modelo de dados
 
+**[Diagrama ER e decisões de modelagem →](docs/modelagem.md)**
+
 8 tabelas, criadas do zero e normalizadas:
 
 | Tabela | Papel |
 |---|---|
 | `terminais` | Terminal nacional / internacional |
-| `vagas` | Posições de estacionamento (gate ou remota), pertencem a um terminal |
+| `vagas` | Posições de estacionamento (gate ou remota), com código único **dentro do terminal** |
 | `aeronaves` | Prefixo, modelo, companhia e **capacidade** (define os assentos do voo) |
 | `voos` | Origem, destino, horários, status e vínculo com aeronave e terminal |
 | `alocacoes_vaga` | **Tabela intermediária voo ↔ vaga** — qual voo ocupa qual posição, e por quê |
@@ -107,6 +109,18 @@ uvicorn src.main:app --reload
 ```
 
 Documentação interativa (Swagger) em **http://localhost:8000/docs**.
+
+## Testes
+
+104 testes cobrem as regras de negócio: as três máquinas de estado, a realocação com as bagagens
+acompanhando o passageiro, a alocação de vagas e a ocupação derivada.
+
+```bash
+python -m pytest
+```
+
+Não é preciso MySQL: os testes sobem um SQLite em memória e substituem o `get_db` da aplicação, de
+modo que rotas, use cases e repositories rodam exatamente como em produção.
 
 ## Principais endpoints
 
