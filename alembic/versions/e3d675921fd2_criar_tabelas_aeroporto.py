@@ -1,7 +1,7 @@
 """criar_tabelas_aeroporto
 
 Revision ID: e3d675921fd2
-Revises: 096b6034262d
+Revises:
 Create Date: 2026-07-24 09:06:22.841502
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'e3d675921fd2'
-down_revision: Union[str, Sequence[str], None] = '096b6034262d'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

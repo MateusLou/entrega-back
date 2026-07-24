@@ -61,6 +61,16 @@ class VooRepository(BaseRepository[Voo]):
             .all()
         )
 
+    def listar_ativos(self) -> list[Voo]:
+        """Voos que ainda estão em operação — base dos indicadores do painel."""
+        return list(
+            self.db.query(Voo)
+            .options(joinedload(Voo.aeronave), joinedload(Voo.terminal))
+            .filter(Voo.status.in_(STATUS_VOO_ATIVO))
+            .order_by(Voo.partida_prevista)
+            .all()
+        )
+
     def proximos(self, limite: int = 8) -> list[Voo]:
         return list(
             self.db.query(Voo)

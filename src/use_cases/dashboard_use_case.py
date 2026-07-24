@@ -10,7 +10,7 @@ from src.repositories.reserva_repository import ReservaRepository
 from src.repositories.vaga_repository import VagaRepository
 from src.repositories.voo_repository import VooRepository
 from src.use_cases.voo_use_case import VooUseCase
-from src.utils.enums import StatusBagagem, StatusVaga, STATUS_VOO_ATIVO
+from src.utils.enums import StatusBagagem, StatusVaga
 
 
 class DashboardUseCase:
@@ -31,7 +31,7 @@ class DashboardUseCase:
         livres = sum(1 for v in vagas if v.status is StatusVaga.LIVRE)
         ocupadas = sum(1 for v in vagas if v.status is StatusVaga.OCUPADA)
 
-        voos_ativos = [v for v in self.voo_repo.listar() if v.status in STATUS_VOO_ATIVO]
+        voos_ativos = self.voo_repo.listar_ativos()
         ocupados = self.reserva_repo.contar_ocupados_em_lote([v.id for v in voos_ativos])
         capacidade_total = sum(v.aeronave.capacidade for v in voos_ativos)
         ocupados_total = sum(ocupados.values())

@@ -24,8 +24,13 @@ class VagaRepository(BaseRepository[Vaga]):
             consulta = consulta.filter(Vaga.tipo == tipo)
         return list(consulta.order_by(Vaga.codigo).all())
 
-    def buscar_por_codigo(self, codigo: str) -> Vaga | None:
-        return self.db.query(Vaga).filter(Vaga.codigo == codigo).first()
+    def buscar_por_codigo(self, terminal_id: int, codigo: str) -> Vaga | None:
+        """O código é único apenas dentro do terminal (uq_vaga_terminal_codigo)."""
+        return (
+            self.db.query(Vaga)
+            .filter(Vaga.terminal_id == terminal_id, Vaga.codigo == codigo)
+            .first()
+        )
 
     def alocacoes_ativas_por_vaga(self) -> dict[int, AlocacaoVaga]:
         """Retorna {vaga_id: alocacao_ativa} para exibir qual voo está em cada vaga."""
