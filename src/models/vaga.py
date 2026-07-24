@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, String, func
+from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database.database import Base
@@ -18,9 +18,14 @@ class Vaga(Base):
     """Posição de estacionamento de aeronave: gate de embarque ou posição remota."""
 
     __tablename__ = "vagas"
+    # O código do gate só precisa ser único dentro do terminal: o terminal nacional e o
+    # internacional podem ter, cada um, a sua posição "A1".
+    __table_args__ = (
+        UniqueConstraint("terminal_id", "codigo", name="uq_vaga_terminal_codigo"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    codigo: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
+    codigo: Mapped[str] = mapped_column(String(10), nullable=False)
     terminal_id: Mapped[int] = mapped_column(
         ForeignKey("terminais.id", ondelete="CASCADE"), nullable=False, index=True
     )

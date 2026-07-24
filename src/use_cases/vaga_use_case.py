@@ -43,22 +43,30 @@ class VagaUseCase:
 
     def criar(self, dados: VagaCriar) -> VagaResposta:
         codigo = dados.codigo.upper()
-        if self.repo.buscar_por_codigo(codigo):
-            raise Conflito(f"Já existe uma vaga com o código '{codigo}'.")
-        if self.terminal_repo.buscar(dados.terminal_id) is None:
+        terminal = self.terminal_repo.buscar(dados.terminal_id)
+        if terminal is None:
             raise NaoEncontrado(f"Terminal {dados.terminal_id} não encontrado.")
+        if self.repo.buscar_por_codigo(dados.terminal_id, codigo):
+            raise Conflito(f"O terminal '{terminal.nome}' já tem uma vaga '{codigo}'.")
         vaga = self.repo.criar(**{**dados.model_dump(), "codigo": codigo})
         return self._montar(vaga, self.repo.alocacoes_ativas_por_vaga())
 
     def atualizar(self, id_: int, dados: VagaAtualizar) -> VagaResposta:
         vaga = self.obter_model(id_)
         campos = dados.model_dump(exclude_unset=True)
-        if campos.get("codigo"):
-            campos["codigo"] = campos["codigo"].upper()
-            if campos["codigo"] != vaga.codigo and self.repo.buscar_por_codigo(campos["codigo"]):
-                raise Conflito(f"Já existe uma vaga com o código '{campos['codigo']}'.")
         if campos.get("terminal_id") and self.terminal_repo.buscar(campos["terminal_id"]) is None:
             raise NaoEncontrado(f"Terminal {campos['terminal_id']} não encontrado.")
+
+        # Mudar o código ou o terminal pode colidir com outra vaga do terminal de destino.
+        if campos.get("codigo"):
+            campos["codigo"] = campos["codigo"].upper()
+        codigo = campos.get("codigo", vaga.codigo)
+        terminal_id = campos.get("terminal_id", vaga.terminal_id)
+        if codigo != vaga.codigo or terminal_id != vaga.terminal_id:
+            existente = self.repo.buscar_por_codigo(terminal_id, codigo)
+            if existente is not None and existente.id != vaga.id:
+                raise Conflito(f"O terminal de destino já tem uma vaga '{codigo}'.")
+
         novo_status = campos.get("status")
         if novo_status and novo_status != StatusVaga.OCUPADA and vaga.status == StatusVaga.OCUPADA:
             ativas = self.repo.alocacoes_ativas_por_vaga()
