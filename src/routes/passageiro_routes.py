@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from src.database.database import get_db
@@ -12,6 +12,7 @@ from src.entities.reserva import ReservaResposta
 from src.use_cases.bagagem_use_case import BagagemUseCase
 from src.use_cases.passageiro_use_case import PassageiroUseCase
 from src.use_cases.reserva_use_case import ReservaUseCase
+from src.utils.notificacoes import notificar_passageiro_criado
 
 router = APIRouter(prefix="/passageiros", tags=["Passageiros"])
 
@@ -39,8 +40,13 @@ def listar_bagagens(passageiro_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=PassageiroResposta, status_code=status.HTTP_201_CREATED)
-def criar(dados: PassageiroCriar, db: Session = Depends(get_db)):
-    return PassageiroUseCase(db).criar(dados)
+def criar(dados: PassageiroCriar, tarefas: BackgroundTasks, db: Session = Depends(get_db)):
+    passageiro = PassageiroUseCase(db).criar(dados)
+    # Depois da resposta sair: quem cadastrou não espera pelo n8n, e uma falha lá
+    # não afeta o 201. O use case segue sem efeito colateral externo, então o
+    # src/seed.py, que o chama direto, não dispara notificação.
+    tarefas.add_task(notificar_passageiro_criado, passageiro.model_dump(mode="json"))
+    return passageiro
 
 
 @router.put("/{passageiro_id}", response_model=PassageiroResposta)
